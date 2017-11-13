@@ -1,0 +1,17 @@
+.qmake.stash
+Makefile
+*.o
+libv_repExtPovRay.1.0.0.dylib
+libv_repExtPovRay.1.0.dylib
+libv_repExtPovRay.1.dylib
+libv_repExtPovRay.dylib
+libv_repExtPovRay.so
+libv_repExtPovRay.so.1
+libv_repExtPovRay.so.1.0
+libv_repExtPovRay.so.1.0.0
+Makefile.Debug
+Makefile.Release
+object_script.*.Debug
+object_script.*.Release
+debug/
+release/
