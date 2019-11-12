@@ -31,7 +31,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
-// Modified for the V-REP Ray-Tracer Plugin (see @V-REP@ for changes)        //
+// Modified for the CoppeliaSim Ray-Tracer Plugin (see @CoppeliaSim@ for changes)        //
 //                                                                           //
 // Author:   Andreu Vidal Bramfeld-Software (bramfeld@diogen.de)             //
 // Date:     2015-07-27                                                      //
@@ -157,7 +157,7 @@ int Parse_Ifdef_Param (void);
 
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
-// @V-REP@                                                                   //
+// @CoppeliaSim@                                                                   //
 //                                                                           //
 // Auxilliary functions to read binary items from source file                //
 //                                                                           //

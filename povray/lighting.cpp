@@ -32,7 +32,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
-// Modified for the V-REP Ray-Tracer Plugin (see @V-REP@ for changes)        //
+// Modified for the CoppeliaSim Ray-Tracer Plugin (see @CoppeliaSim@ for changes)        //
 //                                                                           //
 // Author:   Andreu Vidal Bramfeld-Software (bramfeld@diogen.de)             //
 // Date:     2015-07-27                                                      //
@@ -3604,7 +3604,7 @@ static void do_texture_map(COLOUR Result_Colour, TEXTURE *Texture, VECTOR IPoint
         {
                 ///////////////////////////////////////////////////////////////////////////////
                 //                                                                           //
-                // @V-REP@                                                                   //
+                // @CoppeliaSim@                                                                   //
                 //                                                                           //
                 // Temporarily link the next texture so as to have it rendered together      //
                 //                                                                           //
@@ -3621,7 +3621,7 @@ static void do_texture_map(COLOUR Result_Colour, TEXTURE *Texture, VECTOR IPoint
         {
                 ///////////////////////////////////////////////////////////////////////////////
                 //                                                                           //
-                // @V-REP@                                                                   //
+                // @CoppeliaSim@                                                                   //
                 //                                                                           //
                 // Temporarily link the next texture so as to have it rendered together      //
                 //                                                                           //

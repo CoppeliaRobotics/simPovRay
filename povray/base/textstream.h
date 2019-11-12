@@ -32,7 +32,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
-// Modified for the V-REP Ray-Tracer Plugin (see @V-REP@ for changes)        //
+// Modified for the CoppeliaSim Ray-Tracer Plugin (see @CoppeliaSim@ for changes)        //
 //                                                                           //
 // Author:   Andreu Vidal Bramfeld-Software (bramfeld@diogen.de)             //
 // Date:     2015-07-27                                                      //
@@ -82,7 +82,7 @@ class ITextStream
 
     ///////////////////////////////////////////////////////////////////////////////
     //                                                                           //
-    // @V-REP@                                                                   //
+    // @CoppeliaSim@                                                                   //
     //                                                                           //
     // A new method to allow reading binary data                                 //
     //                                                                           //

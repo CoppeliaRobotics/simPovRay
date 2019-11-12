@@ -32,7 +32,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
-// Modified for the V-REP Ray-Tracer Plugin (see @V-REP@ for changes)        //
+// Modified for the CoppeliaSim Ray-Tracer Plugin (see @CoppeliaSim@ for changes)        //
 //                                                                           //
 // Author:   Andreu Vidal Bramfeld-Software (bramfeld@diogen.de)             //
 // Date:     2015-07-27                                                      //
@@ -1128,7 +1128,7 @@ static int map(VECTOR EPoint, TPATTERN *TPattern, DBL *xcoor, DBL  *ycoor)
 
     ///////////////////////////////////////////////////////////////////////////////
     //                                                                           //
-    // @V-REP@                                                                   //
+    // @CoppeliaSim@                                                                   //
     //                                                                           //
     // Normal images are not upsidedown                                          //
     //                                                                           //

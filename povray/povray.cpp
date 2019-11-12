@@ -32,7 +32,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
-// Modified for the V-REP Ray-Tracer Plugin (see @V-REP@ for changes)        //
+// Modified for the CoppeliaSim Ray-Tracer Plugin (see @CoppeliaSim@ for changes)        //
 //                                                                           //
 // Author:   Andreu Vidal Bramfeld-Software (bramfeld@diogen.de)             //
 // Date:     2015-07-27                                                      //
@@ -170,7 +170,7 @@ PlatformBase *POV_BASE_NAMESPACE::PlatformBase::self = NULL; // GLOBAL VARIABLE
 
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
-// @V-REP@                                                                   //
+// @CoppeliaSim@                                                                   //
 //                                                                           //
 // This entry point replaces the main function to be called directly         //
 // from the ray tracer plugin with custom arguments                          //                         

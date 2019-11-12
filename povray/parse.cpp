@@ -31,7 +31,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
-// Modified for the V-REP Ray-Tracer Plugin (see @V-REP@ for changes)        //
+// Modified for the CoppeliaSim Ray-Tracer Plugin (see @CoppeliaSim@ for changes)        //
 //                                                                           //
 // Author:   Andreu Vidal Bramfeld-Software (bramfeld@diogen.de)             //
 // Date:     2015-07-27                                                      //
@@ -3307,7 +3307,7 @@ static OBJECT *Parse_Mesh()
 
         ///////////////////////////////////////////////////////////////////////////////
         //                                                                           //
-        // @V-REP@                                                                   //
+        // @CoppeliaSim@                                                                   //
         //                                                                           //
         // Mesh vertices are always given in binary format                           //
         //                                                                           //
@@ -3386,7 +3386,7 @@ static OBJECT *Parse_Mesh()
 
         ///////////////////////////////////////////////////////////////////////////////
         //                                                                           //
-        // @V-REP@                                                                   //
+        // @CoppeliaSim@                                                                   //
         //                                                                           //
         // Mesh vertices are always given in binary format                           //
         //                                                                           //
@@ -7411,7 +7411,7 @@ static int Parse_Three_UVCoords(UV_VECT& UV1, UV_VECT& UV2, UV_VECT& UV3)
      
         ///////////////////////////////////////////////////////////////////////////////
         //                                                                           //
-        // @V-REP@                                                                   //
+        // @CoppeliaSim@                                                                   //
         //                                                                           //
         // UV coords are always given in binary format                               //
         //                                                                           //
@@ -8346,7 +8346,7 @@ void Link_Textures (TEXTURE **Old_Textures, TEXTURE *New_Textures)
 
     ///////////////////////////////////////////////////////////////////////////////
     //                                                                           //
-    // @V-REP@                                                                   //
+    // @CoppeliaSim@                                                                   //
     //                                                                           //
     // do_texture_map (lighting.cpp) will take care of layering all textures     //
     //                                                                           //
@@ -8380,7 +8380,7 @@ void Link_Textures (TEXTURE **Old_Textures, TEXTURE *New_Textures)
 
     ///////////////////////////////////////////////////////////////////////////////
     //                                                                           //
-    // @V-REP@                                                                   //
+    // @CoppeliaSim@                                                                   //
     //                                                                           //
     // do_texture_map (lighting.cpp) will take care of layering all textures     //
     //                                                                           //

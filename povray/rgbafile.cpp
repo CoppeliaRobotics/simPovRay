@@ -32,7 +32,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
-// Modified for the V-REP Ray-Tracer Plugin (see @V-REP@ for changes)        //
+// Modified for the CoppeliaSim Ray-Tracer Plugin (see @CoppeliaSim@ for changes)        //
 //                                                                           //
 // Author:   Andreu Vidal Bramfeld-Software (bramfeld@diogen.de)             //
 // Date:     2015-07-27                                                      //
@@ -72,9 +72,9 @@ BEGIN_POV_NAMESPACE
 
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
-// @V-REP@                                                                   //
+// @CoppeliaSim@                                                                   //
 //                                                                           //
-// This function reads V-REP bitmap textures included in the source file     //
+// This function reads CoppeliaSim bitmap textures included in the source file     //
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 

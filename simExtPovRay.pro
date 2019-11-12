@@ -1,25 +1,25 @@
 #QT -= core
 QT -= gui
 
-TARGET = v_repExtPovRay
+TARGET = simExtPovRay
 TEMPLATE = lib
 DEFINES -= UNICODE
 CONFIG += shared
 
 win32 {
-    DEFINES += WIN_VREP
+    DEFINES += WIN_SIM
     DEFINES += NOMINMAX
     DEFINES += _CRT_SECURE_NO_WARNINGS
- #  remove Zc:strictStrings in file C:\Qt\Qt5.6.2\5.6\msvc2015_64\mkspecs\common\msvc-base.conf 
+ #  remove Zc:strictStrings in file C:\Qt\Qt5.6.2\5.6\msvc2015_64\mkspecs\common\msvc-base.conf
 }
 
 macx {
     INCLUDEPATH += "/usr/local/include"
-    DEFINES += MAC_VREP
+    DEFINES += MAC_SIM
 }
 
 unix:!macx {
-    DEFINES += LIN_VREP
+    DEFINES += LIN_SIM
 }
 
 
@@ -49,22 +49,22 @@ unix:!macx {
 }
 
 INCLUDEPATH += "../include"
-INCLUDEPATH += "../v_repMath"
+INCLUDEPATH += "../simMath"
 INCLUDEPATH += povray
 INCLUDEPATH += povray/base
 INCLUDEPATH += povray/frontend
 
 SOURCES += \
-    ../common/v_repLib.cpp \
-    v_repExtPovRay.cpp \
-    ../v_repMath/MyMath.cpp \
-    ../v_repMath/3Vector.cpp \
-    ../v_repMath/4Vector.cpp \
-    ../v_repMath/6Vector.cpp \
-    ../v_repMath/7Vector.cpp \
-    ../v_repMath/3X3Matrix.cpp \
-    ../v_repMath/4X4Matrix.cpp \
-    ../v_repMath/6X6Matrix.cpp \
+    ../common/simLib.cpp \
+    simExtPovRay.cpp \
+    ../simMath/MyMath.cpp \
+    ../simMath/3Vector.cpp \
+    ../simMath/4Vector.cpp \
+    ../simMath/6Vector.cpp \
+    ../simMath/7Vector.cpp \
+    ../simMath/3X3Matrix.cpp \
+    ../simMath/4X4Matrix.cpp \
+    ../simMath/6X6Matrix.cpp \
     povray/base/fileinputoutput.cpp \
     povray/base/povms.cpp \
     povray/base/povmscpp.cpp \
@@ -158,17 +158,17 @@ SOURCES += \
     povray/base/textstreambuffer.cpp
 
 HEADERS +=\
-    ../include/v_repLib.h \
-    v_repExtPovRay.h \
-    ../v_repMath/MyMath.h \
-    ../v_repMath/mathDefines.h \
-    ../v_repMath/3Vector.h \
-    ../v_repMath/4Vector.h \
-    ../v_repMath/6Vector.h \
-    ../v_repMath/7Vector.h \
-    ../v_repMath/3X3Matrix.h \
-    ../v_repMath/4X4Matrix.h \
-    ../v_repMath/6X6Matrix.h \
+    ../include/simLib.h \
+    simExtPovRay.h \
+    ../simMath/MyMath.h \
+    ../simMath/mathDefines.h \
+    ../simMath/3Vector.h \
+    ../simMath/4Vector.h \
+    ../simMath/6Vector.h \
+    ../simMath/7Vector.h \
+    ../simMath/3X3Matrix.h \
+    ../simMath/4X4Matrix.h \
+    ../simMath/6X6Matrix.h \
     povray/base/configbase.h \
     povray/base/fileinputoutput.h \
     povray/base/platformbase.h \

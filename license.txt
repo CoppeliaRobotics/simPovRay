@@ -5,11 +5,16 @@ copying, etc.) contained in the same directory if it is present, or
 under the same terms of the files in the parent directory otherwise.
 
 -----------------------------------------------------------------------
+simExtPovRay, based on v_repExtPovRay from Coppelia Robotics GmbH
+on September 2019
+
+Copyright (C) 2015-2020 Coppelia Robotics GmbH / Marc Freese
+Copyright (C) 2019 Robot Nordic ApS
+
+All rights reserved.
+
 GNU Affero GPL. See here for details: 
 https://www.gnu.org/licenses/agpl-3.0.en.html
-
-Copyright (c) 2018-2019, Coppelia Robotics GmbH
-All rights reserved.
 -----------------------------------------------------------------------
 
 The plugin was written by Andreu Vidal on behalf of Coppelia Robotics GmbH.

@@ -31,7 +31,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
-// Modified for the V-REP Ray-Tracer Plugin (see @V-REP@ for changes)        //
+// Modified for the CoppeliaSim Ray-Tracer Plugin (see @CoppeliaSim@ for changes)        //
 //                                                                           //
 // Author:   Andreu Vidal Bramfeld-Software (bramfeld@diogen.de)             //
 // Date:     2015-07-27                                                      //
@@ -476,9 +476,9 @@ extern POVMSContext POVMS_Output_Context;
 
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
-// @V-REP@                                                                   //
+// @CoppeliaSim@                                                                   //
 //                                                                           //
-// V-REP entry point                                                         //
+// CoppeliaSim entry point                                                         //
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
