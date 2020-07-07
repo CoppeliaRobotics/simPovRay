@@ -66,6 +66,9 @@
 #include "colutils.h"
 #include "pov_util.h"
 #include "pov_util.h"
+#ifdef WIN_SIM
+#include <direct.h>
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
