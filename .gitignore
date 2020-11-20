@@ -4,6 +4,7 @@ Makefile
 libsimExtPovRay.1.0.0.dylib
 libsimExtPovRay.1.0.dylib
 libsimExtPovRay.1.dylib
+libsimExtPovRay.so
 libsimExtPovRay.so.1
 libsimExtPovRay.so.1.0
 libsimExtPovRay.so.1.0.0
