@@ -4,7 +4,7 @@ QT -= gui
 TARGET = simExtPovRay
 TEMPLATE = lib
 DEFINES -= UNICODE
-CONFIG += shared
+CONFIG += shared plugin
 
 win32 {
     DEFINES += WIN_SIM
