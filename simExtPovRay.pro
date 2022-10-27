@@ -63,6 +63,7 @@ SOURCES += \
     ../simMath/7Vector.cpp \
     ../simMath/3X3Matrix.cpp \
     ../simMath/4X4Matrix.cpp \
+    ../simMath/MMatrix.cpp \
     povray/base/fileinputoutput.cpp \
     povray/base/povms.cpp \
     povray/base/povmscpp.cpp \
@@ -165,6 +166,7 @@ HEADERS +=\
     ../simMath/7Vector.h \
     ../simMath/3X3Matrix.h \
     ../simMath/4X4Matrix.h \
+    ../simMath/MMatrix.h \
     povray/base/configbase.h \
     povray/base/fileinputoutput.h \
     povray/base/platformbase.h \
