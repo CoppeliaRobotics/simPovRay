@@ -130,15 +130,15 @@ SIM_DLLEXPORT void simPovRay(int message,void* data)
         resolutionX=((int*)valPtr[0])[0];
         resolutionY=((int*)valPtr[1])[0];
         float* backgroundColor=((float*)valPtr[2]);
-        float viewAngle=float(((double*)valPtr[8])[0]);
+        float viewAngle=((float*)valPtr[8])[0];
         perspectiveOperation=(((int*)valPtr[5])[0]==0);
-        float nearClippingPlane=float(((double*)valPtr[9])[0]);
-        float farClippingPlane=float(((double*)valPtr[10])[0]);
+        float nearClippingPlane=((float*)valPtr[9])[0];
+        float farClippingPlane=((float*)valPtr[10])[0];
         float* amb=(float*)valPtr[11];
-        C7Vector cameraTranformation(C4Vector((double*)valPtr[4]),C3Vector((double*)valPtr[3]));
+        C7Vector cameraTranformation(C4Vector((float*)valPtr[4]),C3Vector((float*)valPtr[3]));
         float* fogBackgroundColor=(float*)valPtr[12];
         bool fogEnabled=((bool*)valPtr[17])[0];
-        float orthoViewSize=float(((double*)valPtr[18])[0]);
+        float orthoViewSize=((float*)valPtr[18])[0];
         int objectHandle=((int*)valPtr[19])[0];
 
         char* rendStr=simGetExtensionString(objectHandle,-1,"focalBlur@povray");
@@ -164,6 +164,15 @@ SIM_DLLEXPORT void simPovRay(int message,void* data)
         rendStr=simGetExtensionString(-1,-1,"fogTransp@povray");
         float fogTransp=strToFloat(rendStr,0.5f);
         simReleaseBuffer(rendStr);
+
+        /*
+        float fogDistance=((float*)valPtr[22])[0];
+        float fogTransp=((float*)valPtr[23])[0];
+        bool povFocalBlurEnabled=((bool*)valPtr[24])[0];
+        float povFocalDistance=((float*)valPtr[25])[0];
+        float povAperture=((float*)valPtr[26])[0];
+        int povBlurSamples=((int*)valPtr[27])[0];
+        */
 
         // Open output file
         scene.open (QIODevice::WriteOnly);
@@ -251,11 +260,14 @@ SIM_DLLEXPORT void simPovRay(int message,void* data)
         // Collect light data from CoppeliaSim (one light at a time):
         void** valPtr=(void**)data;
         int lightType=((int*)valPtr[0])[0];
-        float cutoffAngle=float(((double*)valPtr[1])[0]);
+        float cutoffAngle=((float*)valPtr[1])[0];
         int spotExponent=((int*)valPtr[2])[0];
         float* colors=((float*)valPtr[3]);
-        C7Vector lightTranformation(C4Vector((double*)valPtr[8]),C3Vector((double*)valPtr[7]));
-        float lightSize=float(((double*)valPtr[9])[0]);
+        //float constAttenuation=((float*)valPtr[4])[0];
+        //float linAttenuation=((float*)valPtr[5])[0];
+        //float quadAttenuation=((float*)valPtr[6])[0];
+        C7Vector lightTranformation(C4Vector((float*)valPtr[8]),C3Vector((float*)valPtr[7]));
+        float lightSize=((float*)valPtr[9])[0];
         bool lightIsVisible=((bool*)valPtr[11])[0];
         int objectHandle=((int*)valPtr[13])[0];
 
@@ -268,7 +280,7 @@ SIM_DLLEXPORT void simPovRay(int message,void* data)
         simReleaseBuffer(rendStr);
 
 /*
-        float FadeXDistance=((double*)valPtr[10])[0];
+        float FadeXDistance=((float*)valPtr[10])[0];
         bool noShadow=((bool*)valPtr[12])[0];
 */
 
@@ -344,11 +356,12 @@ SIM_DLLEXPORT void simPovRay(int message,void* data)
         float* normals=((float*)valPtr[4]);
         int normalsCnt=((int*)valPtr[5])[0];
         float* colors=((float*)valPtr[8]);
-        C7Vector tr(C4Vector((double*)valPtr[7]),C3Vector((double*)valPtr[6]));
+        C7Vector tr(C4Vector((float*)valPtr[7]),C3Vector((float*)valPtr[6]));
         bool textured=((bool*)valPtr[18])[0];
+        //float shadingAngle=((float*)valPtr[19])[0];
         unsigned int meshId=((unsigned int*)valPtr[20])[0];
         bool translucid=((bool*)valPtr[21])[0];
-        float opacityFactor=float(((double*)valPtr[22])[0]);
+        float opacityFactor=((float*)valPtr[22])[0];
 //      int povRayMaterial=((int*)valPtr[29])[0];
         int displayAttrib=((int*)valPtr[30])[0];
         const char* colorName=((char*)valPtr[31]);
@@ -486,7 +499,7 @@ SIM_DLLEXPORT void simPovRay(int message,void* data)
         float* normals=((float*)valPtr[2]);
         float* colors=((float*)valPtr[3]);
         bool translucid=((bool*)valPtr[4])[0];
-        float opacityFactor=float(((double*)valPtr[5])[0]);
+        float opacityFactor=((float*)valPtr[5])[0];
 //      int povRayMaterial=((int*)valPtr[6])[0];
         std::string povRayPattern((char*)valPtr[6]);
         bool isMirror=((bool*)valPtr[7])[0];

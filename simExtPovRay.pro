@@ -4,7 +4,6 @@ QT -= gui
 TARGET = simExtPovRay
 TEMPLATE = lib
 DEFINES -= UNICODE
-DEFINES += SIM_MATH_DOUBLE
 CONFIG += shared plugin
 
 win32 {
