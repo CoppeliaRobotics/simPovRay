@@ -1,6 +1,6 @@
 #include "simExtPovRay.h"
-#include "simLib.h"
-#include "4X4Matrix.h"
+#include <simLib.h>
+#include <simMath/4X4Matrix.h>
 #include <iostream>
 #include <QFile>
 #include <QDir>

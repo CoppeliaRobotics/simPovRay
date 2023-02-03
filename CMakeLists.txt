@@ -22,13 +22,13 @@ coppeliasim_add_plugin(
     LEGACY
     SOURCES
     simExtPovRay.cpp
-    ${COPPELIASIM_ROOT_DIR}/programming/simMath/MyMath.cpp
-    ${COPPELIASIM_ROOT_DIR}/programming/simMath/3Vector.cpp
-    ${COPPELIASIM_ROOT_DIR}/programming/simMath/4Vector.cpp
-    ${COPPELIASIM_ROOT_DIR}/programming/simMath/7Vector.cpp
-    ${COPPELIASIM_ROOT_DIR}/programming/simMath/3X3Matrix.cpp
-    ${COPPELIASIM_ROOT_DIR}/programming/simMath/4X4Matrix.cpp
-    ${COPPELIASIM_ROOT_DIR}/programming/simMath/MMatrix.cpp
+    ${COPPELIASIM_ROOT_DIR}/programming/include/simMath/MyMath.cpp
+    ${COPPELIASIM_ROOT_DIR}/programming/include/simMath/3Vector.cpp
+    ${COPPELIASIM_ROOT_DIR}/programming/include/simMath/4Vector.cpp
+    ${COPPELIASIM_ROOT_DIR}/programming/include/simMath/7Vector.cpp
+    ${COPPELIASIM_ROOT_DIR}/programming/include/simMath/3X3Matrix.cpp
+    ${COPPELIASIM_ROOT_DIR}/programming/include/simMath/4X4Matrix.cpp
+    ${COPPELIASIM_ROOT_DIR}/programming/include/simMath/MMatrix.cpp
     povray/base/fileinputoutput.cpp
     povray/base/povms.cpp
     povray/base/povmscpp.cpp

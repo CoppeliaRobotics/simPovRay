@@ -49,21 +49,20 @@ unix:!macx {
 }
 
 INCLUDEPATH += "../include"
-INCLUDEPATH += "../simMath"
 INCLUDEPATH += povray
 INCLUDEPATH += povray/base
 INCLUDEPATH += povray/frontend
 
 SOURCES += \
-    ../common/simLib.cpp \
+    ../include/simLib.cpp \
     simExtPovRay.cpp \
-    ../simMath/MyMath.cpp \
-    ../simMath/3Vector.cpp \
-    ../simMath/4Vector.cpp \
-    ../simMath/7Vector.cpp \
-    ../simMath/3X3Matrix.cpp \
-    ../simMath/4X4Matrix.cpp \
-    ../simMath/MMatrix.cpp \
+    ../include/simMath/MyMath.cpp \
+    ../include/simMath/3Vector.cpp \
+    ../include/simMath/4Vector.cpp \
+    ../include/simMath/7Vector.cpp \
+    ../include/simMath/3X3Matrix.cpp \
+    ../include/simMath/4X4Matrix.cpp \
+    ../include/simMath/MMatrix.cpp \
     povray/base/fileinputoutput.cpp \
     povray/base/povms.cpp \
     povray/base/povmscpp.cpp \
@@ -159,14 +158,14 @@ SOURCES += \
 HEADERS +=\
     ../include/simLib.h \
     simExtPovRay.h \
-    ../simMath/MyMath.h \
-    ../simMath/mathDefines.h \
-    ../simMath/3Vector.h \
-    ../simMath/4Vector.h \
-    ../simMath/7Vector.h \
-    ../simMath/3X3Matrix.h \
-    ../simMath/4X4Matrix.h \
-    ../simMath/MMatrix.h \
+    ../include/simMath/MyMath.h \
+    ../include/simMath/mathDefines.h \
+    ../include/simMath/3Vector.h \
+    ../include/simMath/4Vector.h \
+    ../include/simMath/7Vector.h \
+    ../include/simMath/3X3Matrix.h \
+    ../include/simMath/4X4Matrix.h \
+    ../include/simMath/MMatrix.h \
     povray/base/configbase.h \
     povray/base/fileinputoutput.h \
     povray/base/platformbase.h \
