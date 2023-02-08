@@ -54,7 +54,7 @@ INCLUDEPATH += povray/base
 INCLUDEPATH += povray/frontend
 
 SOURCES += \
-    ../include/simLib.cpp \
+    ../include/simLib/simLib.cpp \
     simExtPovRay.cpp \
     ../include/simMath/MyMath.cpp \
     ../include/simMath/3Vector.cpp \
@@ -156,7 +156,7 @@ SOURCES += \
     povray/base/textstreambuffer.cpp
 
 HEADERS +=\
-    ../include/simLib.h \
+    ../include/simLib/simLib.h \
     simExtPovRay.h \
     ../include/simMath/MyMath.h \
     ../include/simMath/mathDefines.h \
