@@ -56,13 +56,13 @@ INCLUDEPATH += povray/frontend
 SOURCES += \
     ../include/simLib/simLib.cpp \
     simExtPovRay.cpp \
-    ../include/simMath/MyMath.cpp \
+    ../include/simMath/mathFuncs.cpp \
     ../include/simMath/3Vector.cpp \
     ../include/simMath/4Vector.cpp \
     ../include/simMath/7Vector.cpp \
     ../include/simMath/3X3Matrix.cpp \
     ../include/simMath/4X4Matrix.cpp \
-    ../include/simMath/MMatrix.cpp \
+    ../include/simMath/mXnMatrix.cpp \
     povray/base/fileinputoutput.cpp \
     povray/base/povms.cpp \
     povray/base/povmscpp.cpp \
@@ -158,14 +158,14 @@ SOURCES += \
 HEADERS +=\
     ../include/simLib/simLib.h \
     simExtPovRay.h \
-    ../include/simMath/MyMath.h \
+    ../include/simMath/mathFuncs.h \
     ../include/simMath/mathDefines.h \
     ../include/simMath/3Vector.h \
     ../include/simMath/4Vector.h \
     ../include/simMath/7Vector.h \
     ../include/simMath/3X3Matrix.h \
     ../include/simMath/4X4Matrix.h \
-    ../include/simMath/MMatrix.h \
+    ../include/simMath/mXnMatrix.h \
     povray/base/configbase.h \
     povray/base/fileinputoutput.h \
     povray/base/platformbase.h \
