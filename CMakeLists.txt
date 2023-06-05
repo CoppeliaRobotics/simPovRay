@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(simExtPovRay)
+project(simPovRay)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_MACOSX_RPATH 1)
@@ -18,10 +18,10 @@ find_package(CoppeliaSim 4.5.0.0 REQUIRED)
 find_package(Qt5 COMPONENTS Core REQUIRED)
 
 coppeliasim_add_plugin(
-    simExtPovRay
+    simPovRay
     LEGACY
     SOURCES
-    simExtPovRay.cpp
+    simPovRay.cpp
     ${COPPELIASIM_ROOT_DIR}/programming/include/simMath/mathFuncs.cpp
     ${COPPELIASIM_ROOT_DIR}/programming/include/simMath/3Vector.cpp
     ${COPPELIASIM_ROOT_DIR}/programming/include/simMath/4Vector.cpp
@@ -121,9 +121,9 @@ coppeliasim_add_plugin(
     povray/userio.cpp
     povray/base/textstreambuffer.cpp
 )
-set_property(TARGET simExtPovRay PROPERTY CXX_STANDARD 98)
-target_include_directories(simExtPovRay PRIVATE ${COPPELIASIM_ROOT_DIR}/programming/simMath)
-target_include_directories(simExtPovRay PRIVATE povray)
-target_include_directories(simExtPovRay PRIVATE povray/base)
-target_include_directories(simExtPovRay PRIVATE povray/frontend)
-target_link_libraries(simExtPovRay Qt5::Core)
+set_property(TARGET simPovRay PROPERTY CXX_STANDARD 98)
+target_include_directories(simPovRay PRIVATE ${COPPELIASIM_ROOT_DIR}/programming/simMath)
+target_include_directories(simPovRay PRIVATE povray)
+target_include_directories(simPovRay PRIVATE povray/base)
+target_include_directories(simPovRay PRIVATE povray/frontend)
+target_link_libraries(simPovRay Qt5::Core)

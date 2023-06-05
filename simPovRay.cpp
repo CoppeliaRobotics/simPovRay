@@ -1,4 +1,4 @@
-#include "simExtPovRay.h"
+#include "simPovRay.h"
 #include <simLib/simLib.h>
 #include <simMath/4X4Matrix.h>
 #include <iostream>
@@ -70,7 +70,7 @@ float strToFloat(const char* str,float defaultValue)
 
 static const char* makePatternedTexture(const std::string& povRayPattern);
 
-SIM_DLLEXPORT unsigned char simStart(void* reservedPointer,int reservedInt)
+SIM_DLLEXPORT int simInit(const char* pluginName)
 { // This is called just once, at the start of CoppeliaSim.
 
     // Dynamically load and bind CoppeliaSim functions:
@@ -96,29 +96,28 @@ SIM_DLLEXPORT unsigned char simStart(void* reservedPointer,int reservedInt)
      simLib=loadSimLibrary(temp.c_str());
      if (simLib==NULL)
      {
-        printf("simExtPovRay: error: could not find or correctly load the CoppeliaSim library. Cannot start the plugin.\n"); // cannot use simAddLog here.
+         simAddLog(pluginName,sim_verbosity_errors,"could not find or correctly load the CoppeliaSim library. Cannot start the plugin.");
          return(0); // Means error, CoppeliaSim will unload this plugin
      }
      if (getSimProcAddresses(simLib)==0)
      {
-        printf("simExtPovRay: error: could not find all required functions in the CoppeliaSim library. Cannot start the plugin.\n"); // cannot use simAddLog here.
+         simAddLog(pluginName,sim_verbosity_errors,"could not find all required functions in the CoppeliaSim library. Cannot start the plugin.");
          unloadSimLibrary(simLib);
          return(0); // Means error, CoppeliaSim will unload this plugin
      }
      // ******************************************
 
 
-    return(2);  // initialization went fine, return the version number of this plugin!
+    return(3);  // initialization went fine, return the version number of this plugin!
 }
 
-SIM_DLLEXPORT void simEnd()
+SIM_DLLEXPORT void simCleanup()
 { // This is called just once, at the end of CoppeliaSim
     unloadSimLibrary(simLib); // release the library
 }
 
-SIM_DLLEXPORT void* simMessage(int message,int* auxiliaryData,void* customData,int* replyData)
+SIM_DLLEXPORT void simMsg(int,int*,void*)
 { // This is called quite often. Just watch out for messages/events you want to handle
-    return(NULL);
 }
 
 SIM_DLLEXPORT void simPovRay(int message,void* data)

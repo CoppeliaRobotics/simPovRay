@@ -1,7 +1,7 @@
 #QT -= core
 QT -= gui
 
-TARGET = simExtPovRay
+TARGET = simPovRay
 TEMPLATE = lib
 DEFINES -= UNICODE
 CONFIG += shared plugin
@@ -56,7 +56,7 @@ INCLUDEPATH += povray/frontend
 
 SOURCES += \
     ../include/simLib/simLib.cpp \
-    simExtPovRay.cpp \
+    simPovRay.cpp \
     ../include/simMath/mathFuncs.cpp \
     ../include/simMath/3Vector.cpp \
     ../include/simMath/4Vector.cpp \
@@ -158,7 +158,7 @@ SOURCES += \
 
 HEADERS +=\
     ../include/simLib/simLib.h \
-    simExtPovRay.h \
+    simPovRay.h \
     ../include/simMath/mathFuncs.h \
     ../include/simMath/mathDefines.h \
     ../include/simMath/3Vector.h \
