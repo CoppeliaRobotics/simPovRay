@@ -1,10 +1,10 @@
 #pragma once
 
+#include <simLib/simTypes.h>
 #include <simLib/simExp.h>
 
-// The 3 required entry points of the plugin:
-SIM_DLLEXPORT int simInit(const char* pluginName);
+SIM_DLLEXPORT int simInit(SSimInit*);
 SIM_DLLEXPORT void simCleanup();
-SIM_DLLEXPORT void simMsg(int message,int* auxData,void* pointerData);
+SIM_DLLEXPORT void simMsg(SSimMsg*);
 
 SIM_DLLEXPORT void simPovRay(int message,void* data);
