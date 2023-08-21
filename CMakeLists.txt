@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.16.3)
 project(simPovRay)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -126,4 +126,4 @@ target_include_directories(simPovRay PRIVATE ${COPPELIASIM_ROOT_DIR}/programming
 target_include_directories(simPovRay PRIVATE povray)
 target_include_directories(simPovRay PRIVATE povray/base)
 target_include_directories(simPovRay PRIVATE povray/frontend)
-target_link_libraries(simPovRay Qt5::Core)
+target_link_libraries(simPovRay PRIVATE Qt5::Core)
