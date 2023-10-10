@@ -1,3 +1,3 @@
-local simPovRay=loadPlugin('simPovRay')
+local simPovRay = loadPlugin('simPovRay');
 
 return simPovRay
