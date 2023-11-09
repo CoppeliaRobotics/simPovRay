@@ -22,13 +22,13 @@ coppeliasim_add_plugin(
     LEGACY
     SOURCES
     simPovRay.cpp
-    ${COPPELIASIM_ROOT_DIR}/programming/include/simMath/mathFuncs.cpp
-    ${COPPELIASIM_ROOT_DIR}/programming/include/simMath/3Vector.cpp
-    ${COPPELIASIM_ROOT_DIR}/programming/include/simMath/4Vector.cpp
-    ${COPPELIASIM_ROOT_DIR}/programming/include/simMath/7Vector.cpp
-    ${COPPELIASIM_ROOT_DIR}/programming/include/simMath/3X3Matrix.cpp
-    ${COPPELIASIM_ROOT_DIR}/programming/include/simMath/4X4Matrix.cpp
-    ${COPPELIASIM_ROOT_DIR}/programming/include/simMath/mXnMatrix.cpp
+    ${COPPELIASIM_INCLUDE_DIR}/simMath/mathFuncs.cpp
+    ${COPPELIASIM_INCLUDE_DIR}/simMath/3Vector.cpp
+    ${COPPELIASIM_INCLUDE_DIR}/simMath/4Vector.cpp
+    ${COPPELIASIM_INCLUDE_DIR}/simMath/7Vector.cpp
+    ${COPPELIASIM_INCLUDE_DIR}/simMath/3X3Matrix.cpp
+    ${COPPELIASIM_INCLUDE_DIR}/simMath/4X4Matrix.cpp
+    ${COPPELIASIM_INCLUDE_DIR}/simMath/mXnMatrix.cpp
     povray/base/fileinputoutput.cpp
     povray/base/povms.cpp
     povray/base/povmscpp.cpp
@@ -122,7 +122,7 @@ coppeliasim_add_plugin(
     povray/base/textstreambuffer.cpp
 )
 set_property(TARGET simPovRay PROPERTY CXX_STANDARD 98)
-target_include_directories(simPovRay PRIVATE ${COPPELIASIM_ROOT_DIR}/programming/simMath)
+target_include_directories(simPovRay PRIVATE ${COPPELIASIM_INCLUDE_DIR}/simMath)
 target_include_directories(simPovRay PRIVATE povray)
 target_include_directories(simPovRay PRIVATE povray/base)
 target_include_directories(simPovRay PRIVATE povray/frontend)
