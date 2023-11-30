@@ -21,7 +21,7 @@ coppeliasim_add_plugin(
     simPovRay
     LEGACY
     SOURCES
-    simPovRay.cpp
+    sourceCode/simPovRay.cpp
     ${COPPELIASIM_INCLUDE_DIR}/simMath/mathFuncs.cpp
     ${COPPELIASIM_INCLUDE_DIR}/simMath/3Vector.cpp
     ${COPPELIASIM_INCLUDE_DIR}/simMath/4Vector.cpp
@@ -29,102 +29,103 @@ coppeliasim_add_plugin(
     ${COPPELIASIM_INCLUDE_DIR}/simMath/3X3Matrix.cpp
     ${COPPELIASIM_INCLUDE_DIR}/simMath/4X4Matrix.cpp
     ${COPPELIASIM_INCLUDE_DIR}/simMath/mXnMatrix.cpp
-    povray/base/fileinputoutput.cpp
-    povray/base/povms.cpp
-    povray/base/povmscpp.cpp
-    povray/base/processoptions.cpp
-    povray/base/stringutilities.cpp
-    povray/base/textstream.cpp
-    povray/frontend/defaultplatformbase.cpp
-    povray/frontend/processrenderoptions.cpp
-    povray/atmosph.cpp
-    povray/bbox.cpp
-    povray/bcyl.cpp
-    povray/benchmark.cpp
-    povray/bezier.cpp
-    povray/blob.cpp
-    povray/boxes.cpp
-    povray/bsphere.cpp
-    povray/camera.cpp
-    povray/chi2.cpp
-    povray/colour.cpp
-    povray/colutils.cpp
-    povray/cones.cpp
-    povray/csg.cpp
-    povray/discs.cpp
-    povray/express.cpp
-    povray/fncode.cpp
-    povray/fnintern.cpp
-    povray/fnpovfpu.cpp
-    povray/fnsyntax.cpp
-    povray/fpmetric.cpp
-    povray/fractal.cpp
-    povray/function.cpp
-    povray/hcmplx.cpp
-    povray/hfield.cpp
-    povray/histogra.cpp
-    povray/image.cpp
-    povray/interior.cpp
-    povray/isosurf.cpp
-    povray/lathe.cpp
-    povray/lbuffer.cpp
-    povray/lightgrp.cpp
-    povray/lighting.cpp
-    povray/mathutil.cpp
-    povray/matrices.cpp
-    povray/media.cpp
-    povray/mesh.cpp
-    povray/normal.cpp
-    povray/objects.cpp
-    povray/octree.cpp
-    povray/parse.cpp
-    povray/parsestr.cpp
-    povray/parstxtr.cpp
-    povray/pattern.cpp
-    povray/photons.cpp
-    povray/pigment.cpp
-    povray/planes.cpp
-    povray/point.cpp
-    povray/poly.cpp
-    povray/polygon.cpp
-    povray/polysolv.cpp
-    povray/pov_mem.cpp
-    povray/pov_util.cpp
-    povray/povmsend.cpp
-    povray/povmsrec.cpp
-    povray/povray.cpp
-    povray/prism.cpp
-    povray/quadrics.cpp
-    povray/quatern.cpp
-    povray/rad_data.cpp
-    povray/radiosit.cpp
-    povray/ray.cpp
-    povray/rendctrl.cpp
-    povray/render.cpp
-    povray/sor.cpp
-    povray/spheres.cpp
-    povray/sphsweep.cpp
-    povray/splines.cpp
-    povray/statspov.cpp
-    povray/super.cpp
-    povray/texture.cpp
-    povray/tokenize.cpp
-    povray/torus.cpp
-    povray/triangle.cpp
-    povray/truetype.cpp
-    povray/vbuffer.cpp
-    povray/vlbuffer.cpp
-    povray/warps.cpp
-    povray/renderio.cpp
-    povray/rgbafile.cpp
-    povray/optout.cpp
-    povray/userio.cpp
-    povray/base/textstreambuffer.cpp
+    external/povray/base/fileinputoutput.cpp
+    external/povray/base/povms.cpp
+    external/povray/base/povmscpp.cpp
+    external/povray/base/processoptions.cpp
+    external/povray/base/stringutilities.cpp
+    external/povray/base/textstream.cpp
+    external/povray/frontend/defaultplatformbase.cpp
+    external/povray/frontend/processrenderoptions.cpp
+    external/povray/atmosph.cpp
+    external/povray/bbox.cpp
+    external/povray/bcyl.cpp
+    external/povray/benchmark.cpp
+    external/povray/bezier.cpp
+    external/povray/blob.cpp
+    external/povray/boxes.cpp
+    external/povray/bsphere.cpp
+    external/povray/camera.cpp
+    external/povray/chi2.cpp
+    external/povray/colour.cpp
+    external/povray/colutils.cpp
+    external/povray/cones.cpp
+    external/povray/csg.cpp
+    external/povray/discs.cpp
+    external/povray/express.cpp
+    external/povray/fncode.cpp
+    external/povray/fnintern.cpp
+    external/povray/fnpovfpu.cpp
+    external/povray/fnsyntax.cpp
+    external/povray/fpmetric.cpp
+    external/povray/fractal.cpp
+    external/povray/function.cpp
+    external/povray/hcmplx.cpp
+    external/povray/hfield.cpp
+    external/povray/histogra.cpp
+    external/povray/image.cpp
+    external/povray/interior.cpp
+    external/povray/isosurf.cpp
+    external/povray/lathe.cpp
+    external/povray/lbuffer.cpp
+    external/povray/lightgrp.cpp
+    external/povray/lighting.cpp
+    external/povray/mathutil.cpp
+    external/povray/matrices.cpp
+    external/povray/media.cpp
+    external/povray/mesh.cpp
+    external/povray/normal.cpp
+    external/povray/objects.cpp
+    external/povray/octree.cpp
+    external/povray/parse.cpp
+    external/povray/parsestr.cpp
+    external/povray/parstxtr.cpp
+    external/povray/pattern.cpp
+    external/povray/photons.cpp
+    external/povray/pigment.cpp
+    external/povray/planes.cpp
+    external/povray/point.cpp
+    external/povray/poly.cpp
+    external/povray/polygon.cpp
+    external/povray/polysolv.cpp
+    external/povray/pov_mem.cpp
+    external/povray/pov_util.cpp
+    external/povray/povmsend.cpp
+    external/povray/povmsrec.cpp
+    external/povray/povray.cpp
+    external/povray/prism.cpp
+    external/povray/quadrics.cpp
+    external/povray/quatern.cpp
+    external/povray/rad_data.cpp
+    external/povray/radiosit.cpp
+    external/povray/ray.cpp
+    external/povray/rendctrl.cpp
+    external/povray/render.cpp
+    external/povray/sor.cpp
+    external/povray/spheres.cpp
+    external/povray/sphsweep.cpp
+    external/povray/splines.cpp
+    external/povray/statspov.cpp
+    external/povray/super.cpp
+    external/povray/texture.cpp
+    external/povray/tokenize.cpp
+    external/povray/torus.cpp
+    external/povray/triangle.cpp
+    external/povray/truetype.cpp
+    external/povray/vbuffer.cpp
+    external/povray/vlbuffer.cpp
+    external/povray/warps.cpp
+    external/povray/renderio.cpp
+    external/povray/rgbafile.cpp
+    external/povray/optout.cpp
+    external/povray/userio.cpp
+    external/povray/base/textstreambuffer.cpp
 )
 set_property(TARGET simPovRay PROPERTY CXX_STANDARD 98)
 target_include_directories(simPovRay PRIVATE ${COPPELIASIM_INCLUDE_DIR}/simMath)
-target_include_directories(simPovRay PRIVATE povray)
-target_include_directories(simPovRay PRIVATE povray/base)
-target_include_directories(simPovRay PRIVATE povray/frontend)
+target_include_directories(simPovRay PRIVATE external)
+target_include_directories(simPovRay PRIVATE external/povray)
+target_include_directories(simPovRay PRIVATE external/povray/base)
+target_include_directories(simPovRay PRIVATE external/povray/frontend)
 target_link_libraries(simPovRay PRIVATE Qt5::Core)
-coppeliasim_add_lua(simPovRay.lua)
+coppeliasim_add_lua(lua/simPovRay.lua)
