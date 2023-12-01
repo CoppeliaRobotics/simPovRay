@@ -123,6 +123,7 @@ coppeliasim_add_plugin(
 )
 set_property(TARGET simPovRay PROPERTY CXX_STANDARD 98)
 target_include_directories(simPovRay PRIVATE ${COPPELIASIM_INCLUDE_DIR}/simMath)
+target_include_directories(simPovRay PRIVATE sourceCode)
 target_include_directories(simPovRay PRIVATE external)
 target_include_directories(simPovRay PRIVATE external/povray)
 target_include_directories(simPovRay PRIVATE external/povray/base)
