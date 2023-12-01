@@ -1,11 +1,11 @@
-#include "simPovRay.h"
+#include <simPovRay.h>
 #include <simLib/simLib.h>
 #include <simMath/4X4Matrix.h>
 #include <iostream>
 #include <QFile>
 #include <QDir>
 #include <QMap>
-#include "povray/povray.h"
+#include <povray/povray.h>
 
 LIBRARY simLib;
 

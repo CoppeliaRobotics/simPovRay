@@ -50,13 +50,15 @@ unix:!macx {
 }
 
 INCLUDEPATH += "../include"
+INCLUDEPATH += sourceCode
+INCLUDEPATH += external
 INCLUDEPATH += external/povray
 INCLUDEPATH += external/povray/base
 INCLUDEPATH += external/povray/frontend
 
 SOURCES += \
+    sourceCode/simPovRay.cpp \
     ../include/simLib/simLib.cpp \
-    sourcCode/simPovRay.cpp \
     ../include/simMath/mathFuncs.cpp \
     ../include/simMath/3Vector.cpp \
     ../include/simMath/4Vector.cpp \
@@ -157,8 +159,8 @@ SOURCES += \
     external/povray/base/textstreambuffer.cpp
 
 HEADERS +=\
+    sourceCode/simPovRay.h \
     ../include/simLib/simLib.h \
-    sourcCode/simPovRay.h \
     ../include/simMath/mathFuncs.h \
     ../include/simMath/mathDefines.h \
     ../include/simMath/3Vector.h \
