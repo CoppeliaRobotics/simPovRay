@@ -15,7 +15,10 @@ if(NOT COPPELIASIM_INCLUDE_DIR)
 endif()
 list(APPEND CMAKE_MODULE_PATH ${COPPELIASIM_INCLUDE_DIR}/cmake)
 find_package(CoppeliaSim 4.5.1.7 REQUIRED)
-find_package(Qt5 COMPONENTS Core REQUIRED)
+
+set(Qt Qt5 CACHE STRING "Qt version to use (e.g. Qt5)")
+set_property(CACHE Qt PROPERTY STRINGS Qt5 Qt6)
+find_package(${Qt} COMPONENTS Core REQUIRED)
 
 coppeliasim_add_plugin(
     simPovRay
@@ -128,5 +131,5 @@ target_include_directories(simPovRay PRIVATE external)
 target_include_directories(simPovRay PRIVATE external/povray)
 target_include_directories(simPovRay PRIVATE external/povray/base)
 target_include_directories(simPovRay PRIVATE external/povray/frontend)
-target_link_libraries(simPovRay PRIVATE Qt5::Core)
+target_link_libraries(simPovRay PRIVATE ${Qt}::Core)
 coppeliasim_add_lua(lua/simPovRay.lua)
