@@ -256,7 +256,7 @@ SIM_DLLEXPORT void simPovRay(int message,void* data)
         C4X4Matrix m4(lightTranformation.getMatrix());
         C3Vector pos = m4.X;
         C3Vector dir = m4.M.axis[2];
-        if (lightType == sim_light_directional_subtype)
+        if (lightType == sim_light_directional)
             pos(0) = -dir(0) * 100, pos(1) = -dir(1) * 100, pos(2) = -dir(2) * 100;
         else
             dir += pos;
@@ -267,7 +267,7 @@ SIM_DLLEXPORT void simPovRay(int message,void* data)
                       pos(0), pos(1), pos(2), colors[3], colors[4], colors[5]);
 
         // Assign surface and draw a white disc to signal it
-        if (lightSize > 0 && lightType != sim_light_directional_subtype)
+        if (lightSize > 0 && lightType != sim_light_directional)
         {
             p += sprintf (p, " area_light <%f,0,0>, <0,%f,0>, 3, 3 adaptive 1 circular orient jitter",
                           lightSize, lightSize);
@@ -281,15 +281,15 @@ SIM_DLLEXPORT void simPovRay(int message,void* data)
         }
 
         // Add parameters according to light type
-        if (lightType == sim_light_omnidirectional_subtype)
+        if (lightType == sim_light_omnidirectional)
         {
         }
-        else if (lightType == sim_light_directional_subtype)
+        else if (lightType == sim_light_directional)
         {
             p += sprintf (p, " parallel point_at <%f,%f,%f>",
                           dir(0), dir(1), dir(2));
         }
-        else if (lightType == sim_light_spot_subtype)
+        else if (lightType == sim_light_spot)
         {
             float ang = cutoffAngle * radToDeg;
             float exp = (float) spotExponent / 2.0f;
