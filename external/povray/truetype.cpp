@@ -110,9 +110,7 @@ typedef unsigned int ULONG;
 typedef short FWord;
 typedef unsigned short uFWord;
 
-#if !defined(TARGET_OS_MAC)
 typedef int Fixed;
-#endif
 
 typedef struct
 {
