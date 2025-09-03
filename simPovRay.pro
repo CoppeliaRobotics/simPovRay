@@ -10,7 +10,6 @@ win32 {
     DEFINES += WIN_SIM
     DEFINES += NOMINMAX
     DEFINES += _CRT_SECURE_NO_WARNINGS
- #  remove Zc:strictStrings  in file Qt\QtX.Y.Z\...\msvc20XX_64\mkspecs\common\msvc-version.conf
 }
 
 macx {
@@ -24,8 +23,8 @@ unix:!macx {
 
 
 *-msvc* {
-        QMAKE_CXXFLAGS += -O2
-        QMAKE_CXXFLAGS += -W3
+        QMAKE_CXXFLAGS += /O2
+        QMAKE_CXXFLAGS += /Zc:strictStrings-
 }
 *-g++* {
         QMAKE_CXXFLAGS += -O3
