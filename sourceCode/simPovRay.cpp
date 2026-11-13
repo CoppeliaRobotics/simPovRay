@@ -117,13 +117,20 @@ static void markerWriteFinish (char*& p)
     }
 }
 
-// Marker colours arrive as RGBA, but CoppeliaSim's marker rendering is opaque
-// (its marker pass draws with blending disabled), so the alpha channel is
-// deliberately ignored here as well.
+// Marker colours arrive as RGBA; the alpha channel is the marker's opacity.
+// This POV-Ray build applies rgbt's transmit as transmit^2 (measurable across
+// the whole range), so the square root is used to get a linear alpha blend
+// like CoppeliaSim's own renderer.
+static float markerTransmit (float alpha)
+{
+    const float transparency = 1.0f - alpha;
+    return (transparency > 0.0f) ? sqrtf (transparency) : 0.0f;
+}
+
 static void markerWriteTexture (char*& p, const float rgba[4])
 {
-    p += sprintf (p, " texture {pigment {rgb <%.9g,%.9g,%.9g>}",
-                  rgba[0], rgba[1], rgba[2]);
+    p += sprintf (p, " texture {pigment {rgbt <%.9g,%.9g,%.9g,%.9g>}",
+                  rgba[0], rgba[1], rgba[2], markerTransmit (rgba[3]));
     markerWriteFinish (p);
     p += sprintf (p, "}");
 }
@@ -148,19 +155,20 @@ static void markerWriteClipping (char*& p)
 
 static bool markerColorsEqual (const float a[4], const float b[4])
 {
-    return a[0] == b[0] && a[1] == b[1] && a[2] == b[2];
+    return a[0] == b[0] && a[1] == b[1] && a[2] == b[2] && a[3] == b[3];
 }
 
 // POV-Ray has no per-vertex colours, but a gradient pigment evaluated in object
 // space gives the exact linear interpolation along a line/tube: the cylinder is
 // built along its local x axis from 0 to 1, so gradient x spans start..end.
+// The colour map interpolates the alpha channel (transmit) as well.
 static void markerWriteGradientTexture (char*& p, const float a[4], const float b[4])
 {
     p += sprintf (p, " texture {pigment {gradient x color_map {"
-                      "[0.0 rgb <%.9g,%.9g,%.9g>]"
-                      "[1.0 rgb <%.9g,%.9g,%.9g>]}}",
-                  a[0], a[1], a[2],
-                  b[0], b[1], b[2]);
+                      "[0.0 rgbt <%.9g,%.9g,%.9g,%.9g>]"
+                      "[1.0 rgbt <%.9g,%.9g,%.9g,%.9g>]}}",
+                  a[0], a[1], a[2], markerTransmit (a[3]),
+                  b[0], b[1], b[2], markerTransmit (b[3]));
     markerWriteFinish (p);
     p += sprintf (p, "}");
 }
