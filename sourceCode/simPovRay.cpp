@@ -2,6 +2,7 @@
 #include <simLib/simLib.h>
 #include <simMath/4X4Matrix.h>
 #include <iostream>
+#include <vector>
 #include <QFile>
 #include <QDir>
 #include <QMap>
@@ -59,6 +60,638 @@ float strToFloat(const char* str,float defaultValue)
 }
 
 static const char* makePatternedTexture(const std::string& povRayPattern);
+
+// ---------------------------------------------------------------------------
+// Markers
+//
+// CoppeliaSim sends markers as primitive descriptions (points, lines, tubes,
+// triangles, one-point shapes, axes and custom meshes) together with a marker
+// frame.  The engine's arrays are only valid for the duration of the callback,
+// so they are either copied or consumed immediately here.
+//
+// POV-Ray has no marker primitive, so every type is translated into the
+// closest POV-Ray primitive.  The unit shapes match CMarker::drawItems() in
+// CoppeliaSim: a [-0.5, 0.5] box, a radius 0.5 sphere or disc in the XY plane,
+// and a radius 0.5, unit high cylinder along Z.  Sizes are therefore the full
+// extents of those unit shapes and are used directly, while the item pose is
+// applied as translate(point) * rotate(quaternion) * scale(size) inside the
+// marker frame.
+// ---------------------------------------------------------------------------
+
+// Points, lines and axes carry no size in the callback, so they get a small
+// world-space thickness instead (matches the screen-space points/lines of the
+// engine's own renderer reasonably well).
+static const float markerPointRadius = 0.00025f;
+static const float markerLineRadius = 0.00025f;
+
+// Camera state, only used to draw overlay markers in front of the scene.
+static bool cameraIsPerspective = true;
+static C3Vector cameraPosition;
+static C3Vector cameraViewDirection;
+static float cameraNearPlane = 0.01f;
+
+static int markerMeshIndex = 0;
+
+// Not-shaded markers must show their plain colour.  POV-Ray 3.6 has no
+// emission, so the ambient term (pigment * scene ambient * finish ambient) is
+// cancelled by dividing the finish ambient by the scene ambient light; with
+// diffuse 0 nothing else contributes.  A zero scene ambient cannot be
+// compensated, so the ambient light itself is raised to a barely visible
+// minimum when the scene is written.
+static bool markerNotShaded = false;
+static float markerAmbientLight[3] = {1.0f, 1.0f, 1.0f};
+
+static void markerWriteFinish (char*& p)
+{
+    if (markerNotShaded)
+    {
+        p += sprintf (p, " finish {ambient rgb <%.9g,%.9g,%.9g>"
+                          " diffuse 0 specular 0 reflection 0}",
+                      1.0f / markerAmbientLight[0],
+                      1.0f / markerAmbientLight[1],
+                      1.0f / markerAmbientLight[2]);
+    }
+    else
+    {
+        p += sprintf (p, " finish {ambient 1 diffuse 1}");
+    }
+}
+
+// Marker colours arrive as RGBA, but CoppeliaSim's marker rendering is opaque
+// (its marker pass draws with blending disabled), so the alpha channel is
+// deliberately ignored here as well.
+static void markerWriteTexture (char*& p, const float rgba[4])
+{
+    p += sprintf (p, " texture {pigment {rgb <%.9g,%.9g,%.9g>}",
+                  rgba[0], rgba[1], rgba[2]);
+    markerWriteFinish (p);
+    p += sprintf (p, "}");
+}
+
+// POV-Ray matrices take the three axes followed by the translation, i.e. the
+// same column-major layout as C4X4Matrix (the mesh writer further down does
+// the same).
+static void markerWriteMatrix (char*& p, const C4X4Matrix& matrix)
+{
+    p += sprintf (p, " matrix <%.9g,%.9g,%.9g,%.9g,%.9g,%.9g,"
+                      "%.9g,%.9g,%.9g,%.9g,%.9g,%.9g>",
+                  matrix.M.axis[0](0), matrix.M.axis[0](1), matrix.M.axis[0](2),
+                  matrix.M.axis[1](0), matrix.M.axis[1](1), matrix.M.axis[1](2),
+                  matrix.M.axis[2](0), matrix.M.axis[2](1), matrix.M.axis[2](2),
+                  matrix.X(0), matrix.X(1), matrix.X(2));
+}
+
+static void markerWriteClipping (char*& p)
+{
+    p += sprintf (p, " clipped_by {plane {NearPlane}} clipped_by {plane {FarPlane}}");
+}
+
+static bool markerColorsEqual (const float a[4], const float b[4])
+{
+    return a[0] == b[0] && a[1] == b[1] && a[2] == b[2];
+}
+
+// POV-Ray has no per-vertex colours, but a gradient pigment evaluated in object
+// space gives the exact linear interpolation along a line/tube: the cylinder is
+// built along its local x axis from 0 to 1, so gradient x spans start..end.
+static void markerWriteGradientTexture (char*& p, const float a[4], const float b[4])
+{
+    p += sprintf (p, " texture {pigment {gradient x color_map {"
+                      "[0.0 rgb <%.9g,%.9g,%.9g>]"
+                      "[1.0 rgb <%.9g,%.9g,%.9g>]}}",
+                  a[0], a[1], a[2],
+                  b[0], b[1], b[2]);
+    markerWriteFinish (p);
+    p += sprintf (p, "}");
+}
+
+// Raw triangle; the mesh parser in this POV-Ray build reads triangle vertices
+// binary.  Small triangles cannot be expressed as polygon primitives: POV-Ray
+// rejects polygons whose area is below its epsilon, which is exactly the scale
+// marker triangles live at, so they are emitted as one-triangle meshes.
+static void markerWriteBinaryTriangle (const C3Vector& a, const C3Vector& b, const C3Vector& c)
+{
+    float values[9] = {(float) a(0), (float) a(1), (float) a(2),
+                       (float) b(0), (float) b(1), (float) b(2),
+                       (float) c(0), (float) c(1), (float) c(2)};
+    scene.write ("triangle {", 10);
+    scene.write ((const char*) values, sizeof (values));
+    scene.write ("}\n", 2);
+}
+
+static void markerWriteMeshTriangle (const C3Vector& a, const C3Vector& b, const C3Vector& c,
+                                     const float rgba[4], bool overlay)
+{
+    char buffer[2048];
+    char* p = buffer;
+    p += sprintf (p, "mesh {");
+    scene.write (buffer, p - buffer);
+    markerWriteBinaryTriangle (a, b, c);
+
+    p = buffer;
+    markerWriteTexture (p, rgba);
+    p += sprintf (p, " double_illuminate no_shadow");
+    if (! overlay)
+        markerWriteClipping (p);
+    p += sprintf (p, "}\n");
+    scene.write (buffer, p - buffer);
+}
+
+// Unit square in the XY plane as two mesh triangles (see the note above).
+static void markerWriteUnitSquare (const float rgba[4], const C4X4Matrix& matrix, bool overlay)
+{
+    const C3Vector a (-0.5f, -0.5f, 0.0f);
+    const C3Vector b (0.5f, -0.5f, 0.0f);
+    const C3Vector c (0.5f, 0.5f, 0.0f);
+    const C3Vector d (-0.5f, 0.5f, 0.0f);
+
+    char buffer[2048];
+    char* p = buffer;
+    p += sprintf (p, "mesh {");
+    scene.write (buffer, p - buffer);
+    markerWriteBinaryTriangle (a, b, c);
+    markerWriteBinaryTriangle (a, c, d);
+
+    p = buffer;
+    markerWriteTexture (p, rgba);
+    p += sprintf (p, " double_illuminate");
+    markerWriteMatrix (p, matrix);
+    p += sprintf (p, " no_shadow");
+    if (! overlay)
+        markerWriteClipping (p);
+    p += sprintf (p, "}\n");
+    scene.write (buffer, p - buffer);
+}
+
+// A line/tube segment.  With two different colours the cylinder is placed in a
+// local frame whose x axis runs from a to b, so the gradient texture follows
+// the segment instead of the world x axis.
+static void markerWriteSegment (const C3Vector& a, const C3Vector& b, float radius,
+                                const float colorA[4], const float colorB[4], bool overlay)
+{
+    const C3Vector axis = b - a;
+    const simReal length = axis.getLength();
+    if (length < 1e-9)
+        return;
+
+    char buffer[2048];
+    char* p = buffer;
+
+    if (markerColorsEqual (colorA, colorB))
+    {
+        p += sprintf (p, "cylinder {<%.9g,%.9g,%.9g>, <%.9g,%.9g,%.9g>, %.9g",
+                      a(0), a(1), a(2), b(0), b(1), b(2), radius);
+        markerWriteTexture (p, colorA);
+    }
+    else
+    {
+        const C3Vector xAxis = axis / length;
+        const C3Vector helper = (fabs (xAxis(1)) < 0.9f) ? C3Vector (0.0f, 1.0f, 0.0f)
+                                                          : C3Vector (1.0f, 0.0f, 0.0f);
+        const C3Vector zAxis = (xAxis ^ helper).getNormalized();
+        const C3Vector yAxis = zAxis ^ xAxis;
+
+        C4X4Matrix matrix;
+        matrix.setIdentity();
+        matrix.M = C3X3Matrix (xAxis, yAxis, zAxis);
+        matrix.M.axis[0] *= length;
+        matrix.X = a;
+
+        p += sprintf (p, "cylinder {<0,0,0>, <1,0,0>, %.9g", radius);
+        markerWriteGradientTexture (p, colorA, colorB);
+        markerWriteMatrix (p, matrix);
+    }
+
+    p += sprintf (p, " no_shadow");
+    if (! overlay)
+        markerWriteClipping (p);
+    p += sprintf (p, "}\n");
+    scene.write (buffer, p - buffer);
+}
+
+static void markerTriangleColor (const float ca[4], const float cb[4], const float cc[4],
+                                 int i, int j, int n, float rgba[4])
+{
+    const float wa = float (n - i - j) / float (n);
+    const float wb = float (i) / float (n);
+    const float wc = float (j) / float (n);
+    int k;
+    for (k = 0; k < 4; ++k)
+        rgba[k] = ca[k] * wa + cb[k] * wb + cc[k] * wc;
+}
+
+// POV-Ray cannot interpolate three corner colours over one polygon, so a
+// triangle with differing corner colours is split into 6x6 sub-triangles, each
+// getting the interpolated colour at its centre.  Equal colours (the usual
+// case) keep a single triangle.
+static void markerWriteTriangle (const C3Vector& a, const C3Vector& b, const C3Vector& c,
+                                 const float ca[4], const float cb[4], const float cc[4],
+                                 bool overlay)
+{
+    if (markerColorsEqual (ca, cb) && markerColorsEqual (ca, cc))
+    {
+        markerWriteMeshTriangle (a, b, c, ca, overlay);
+        return;
+    }
+
+    const int n = 6;
+    const C3Vector ab = (b - a) / (simReal) n;
+    const C3Vector ac = (c - a) / (simReal) n;
+    int i, j;
+    for (i = 0; i < n; ++i)
+    {
+        for (j = 0; j + i < n; ++j)
+        {
+            const C3Vector p00 = a + ab * (simReal) i + ac * (simReal) j;
+            const C3Vector p10 = p00 + ab;
+            const C3Vector p01 = p00 + ac;
+
+            float c00[4], c10[4], c01[4], color[4];
+            markerTriangleColor (ca, cb, cc, i, j, n, c00);
+            markerTriangleColor (ca, cb, cc, i + 1, j, n, c10);
+            markerTriangleColor (ca, cb, cc, i, j + 1, n, c01);
+            int k;
+            for (k = 0; k < 4; ++k)
+                color[k] = (c00[k] + c10[k] + c01[k]) / 3.0f;
+            markerWriteMeshTriangle (p00, p10, p01, color, overlay);
+
+            if (i + j <= n - 2)
+            {
+                const C3Vector p11 = p00 + ab + ac;
+                float c11[4];
+                markerTriangleColor (ca, cb, cc, i + 1, j + 1, n, c11);
+                for (k = 0; k < 4; ++k)
+                    color[k] = (c10[k] + c11[k] + c01[k]) / 3.0f;
+                markerWriteMeshTriangle (p10, p11, p01, color, overlay);
+            }
+        }
+    }
+}
+
+static void markerReadColor (const unsigned char* colors, int index, float rgba[4])
+{
+    if (colors != 0)
+    {
+        const unsigned char* c = colors + 4 * index;
+        rgba[0] = c[0] / 255.0f;
+        rgba[1] = c[1] / 255.0f;
+        rgba[2] = c[2] / 255.0f;
+        rgba[3] = c[3] / 255.0f;
+    }
+    else
+    {
+        rgba[0] = rgba[1] = rgba[2] = rgba[3] = 1.0f;
+    }
+}
+
+// The frame arrives as double precision position and (qx, qy, qz, qw) quaternion.
+static C4X4Matrix markerFrameMatrix (const double* position, const double* quaternion)
+{
+    const CQuaternion q ((simReal) quaternion[3], (simReal) quaternion[0],
+                         (simReal) quaternion[1], (simReal) quaternion[2]);
+    const CPose pose (q, C3Vector ((simReal) position[0], (simReal) position[1],
+                                   (simReal) position[2]));
+    return pose.getMatrix();
+}
+
+// A zero size would make POV-Ray replace the whole matrix column by 1, which
+// would turn a flat item into a solid one; a tiny extent keeps it flat.
+static simReal markerSafeScale (simReal value)
+{
+    if (fabs (value) < 1e-6)
+        return (simReal) 1e-6;
+    return value;
+}
+
+static C4X4Matrix markerItemMatrix (const C4X4Matrix& frame, const float* point,
+                                    const float* quaternion, const float* size)
+{
+    C4X4Matrix translation;
+    translation.setIdentity();
+    translation.X = C3Vector (point[0], point[1], point[2]);
+
+    C4X4Matrix rotation;
+    rotation.setIdentity();
+    if (quaternion != 0)
+        rotation.M = CQuaternion (quaternion[3], quaternion[0], quaternion[1],
+                                  quaternion[2]).getMatrix();
+
+    C4X4Matrix scaling;
+    scaling.setIdentity();
+    if (size != 0)
+    {
+        scaling.M.axis[0] *= markerSafeScale (size[0]);
+        scaling.M.axis[1] *= markerSafeScale (size[1]);
+        scaling.M.axis[2] *= markerSafeScale (size[2]);
+    }
+    return frame * translation * rotation * scaling;
+}
+
+// POV-Ray always renders the closest surface, so an overlay marker cannot
+// simply ignore depth.  Instead the whole marker is moved towards the camera:
+// scaling about the eye (or shifting along the view axis for an orthographic
+// camera) keeps its projected position and size, but puts it in front of the
+// scene, which is clipped at the near plane.
+static bool markerMoveOverlayPoints (std::vector<C3Vector>& points, float& scale, C3Vector& shift)
+{
+    scale = 1.0f;
+    shift.clear();
+
+    float maxDepth = 0.0f;
+    size_t i;
+    for (i = 0; i < points.size(); ++i)
+    {
+        const float depth = (points[i] - cameraPosition) * cameraViewDirection;
+        if (depth > maxDepth)
+            maxDepth = depth;
+    }
+    if (maxDepth <= 1e-6f)
+        return false; // the marker is behind the camera
+
+    // The scene is clipped at the near plane, so pulling the marker to half
+    // that distance puts it in front of every piece of geometry.  Scaling
+    // about the eye (or shifting along the view axis for an orthographic
+    // camera) does not change where the marker projects.  This POV-Ray build
+    // stops rendering objects closer than about a millimetre, which is the
+    // lower bound for very small near planes.
+    float targetDepth = 0.5f * cameraNearPlane;
+    if (targetDepth < 0.001f)
+        targetDepth = 0.001f;
+    if (cameraIsPerspective)
+    {
+        scale = targetDepth / maxDepth;
+        for (i = 0; i < points.size(); ++i)
+            points[i] = cameraPosition + (points[i] - cameraPosition) * scale;
+    }
+    else
+    {
+        shift = cameraViewDirection * (targetDepth - maxDepth);
+        for (i = 0; i < points.size(); ++i)
+            points[i] += shift;
+    }
+    return true;
+}
+
+static void markerMoveOverlayMatrix (C4X4Matrix& matrix, float scale, const C3Vector& shift)
+{
+    if (cameraIsPerspective)
+    {
+        matrix.M *= scale;
+        matrix.X = cameraPosition + (matrix.X - cameraPosition) * scale;
+    }
+    else
+    {
+        matrix.X += shift;
+    }
+}
+
+static void writeMarker (void** valPtr)
+{
+    if (! scene.isOpen())
+        return; // marker callback outside of a render frame
+
+    const int type = ((const int*) valPtr[0])[0];
+    const int options = ((const int*) valPtr[1])[0];
+    const int pointDataCount = ((const int*) valPtr[2])[0];
+    const float* pointData = (valPtr[3] != 0) ? *((const float* const*) valPtr[3]) : 0;
+    const float* quaternions = (valPtr[4] != 0) ? *((const float* const*) valPtr[4]) : 0;
+    const unsigned char* colors = (valPtr[5] != 0) ? *((const unsigned char* const*) valPtr[5]) : 0;
+    const float* sizes = (valPtr[6] != 0) ? *((const float* const*) valPtr[6]) : 0;
+    const float* vertices = (valPtr[8] != 0) ? *((const float* const*) valPtr[8]) : 0;
+    const int vertexCount = ((const int*) valPtr[9])[0];
+    const int* indices = (valPtr[10] != 0) ? *((const int* const*) valPtr[10]) : 0;
+    const int indexCount = ((const int*) valPtr[11])[0];
+    const float* normals = (valPtr[12] != 0) ? *((const float* const*) valPtr[12]) : 0;
+    const double* framePosition = (const double*) valPtr[13];
+    const double* frameQuaternion = (const double*) valPtr[14];
+
+    if (pointData == 0 || pointDataCount < 3 || framePosition == 0 || frameQuaternion == 0)
+        return;
+
+    const int pointCount = pointDataCount / 3; // number of points (3 floats each)
+    const C4X4Matrix frame = markerFrameMatrix (framePosition, frameQuaternion);
+
+    // Copy the points, since the engine's buffer is only valid during this
+    // callback; the world positions are needed to place overlay markers.
+    std::vector<C3Vector> worldPoints (pointCount);
+    int i;
+    for (i = 0; i < pointCount; ++i)
+        worldPoints[i] = frame * C3Vector (pointData[3 * i], pointData[3 * i + 1],
+                                           pointData[3 * i + 2]);
+
+    const bool overlay = (options & sim_markeropts_overlay) != 0;
+    markerNotShaded = (options & sim_markeropts_notshaded) != 0;
+    float overlayScale = 1.0f;
+    C3Vector overlayShift;
+    if (overlay && !markerMoveOverlayPoints (worldPoints, overlayScale, overlayShift))
+        return;
+
+    char buffer[2048];
+    char* p;
+    float rgba[4];
+
+    if (type == sim_markertype_points)
+    {
+        // Points have no size; when an overlay marker is scaled towards the
+        // camera, the thickness has to follow to keep its screen size.
+        const float radius = markerPointRadius * overlayScale;
+        for (i = 0; i < pointCount; ++i)
+        {
+            markerReadColor (colors, i, rgba);
+            p = buffer;
+            p += sprintf (p, "sphere {<%.9g,%.9g,%.9g>, %.9g",
+                          worldPoints[i](0), worldPoints[i](1), worldPoints[i](2),
+                          radius);
+            markerWriteTexture (p, rgba);
+            p += sprintf (p, " no_shadow");
+            if (! overlay)
+                markerWriteClipping (p);
+            p += sprintf (p, "}\n");
+            scene.write (buffer, p - buffer);
+        }
+    }
+    else if (type == sim_markertype_lines || type == sim_markertype_tubes)
+    {
+        float radius = markerLineRadius;
+        if (type == sim_markertype_tubes)
+        { // the engine stores the tube diameter in the first size value
+            radius = (sizes != 0) ? 0.5f * sizes[0] : markerLineRadius;
+            if (radius <= 0.0f)
+                radius = markerLineRadius;
+        }
+        radius *= overlayScale;
+        for (i = 0; i + 1 < pointCount; i += 2)
+        {
+            float colorA[4], colorB[4];
+            markerReadColor (colors, i, colorA);
+            if (type == sim_markertype_tubes)
+            { // the engine draws tubes with the first colour only
+                int k;
+                for (k = 0; k < 4; ++k)
+                    colorB[k] = colorA[k];
+            }
+            else
+            {
+                markerReadColor (colors, i + 1, colorB);
+            }
+            markerWriteSegment (worldPoints[i], worldPoints[i + 1], radius,
+                                colorA, colorB, overlay);
+        }
+    }
+    else if (type == sim_markertype_triangles)
+    {
+        for (i = 0; i + 2 < pointCount; i += 3)
+        {
+            float ca[4], cb[4], cc[4];
+            markerReadColor (colors, i, ca);
+            markerReadColor (colors, i + 1, cb);
+            markerReadColor (colors, i + 2, cc);
+            markerWriteTriangle (worldPoints[i], worldPoints[i + 1], worldPoints[i + 2],
+                                 ca, cb, cc, overlay);
+        }
+    }
+    else if (type == sim_markertype_axes)
+    {
+        for (i = 0; i < pointCount; ++i)
+        {
+            C4X4Matrix matrix = markerItemMatrix (frame, pointData + 3 * i,
+                                                  quaternions != 0 ? quaternions + 4 * i : 0,
+                                                  sizes != 0 ? sizes + 3 * i : 0);
+            if (overlay)
+                markerMoveOverlayMatrix (matrix, overlayScale, overlayShift);
+
+            const C3Vector origin = matrix.X;
+            int axis;
+            for (axis = 0; axis < 3; ++axis)
+            {
+                C3Vector direction (0.0f, 0.0f, 0.0f);
+                direction(axis) = 1.0f;
+                const C3Vector end = matrix * direction;
+                rgba[0] = (axis == 0) ? 1.0f : 0.0f;
+                rgba[1] = (axis == 1) ? 1.0f : 0.0f;
+                rgba[2] = (axis == 2) ? 1.0f : 0.0f;
+                rgba[3] = 1.0f;
+                markerWriteSegment (origin, end, markerLineRadius * overlayScale,
+                                    rgba, rgba, overlay);
+            }
+        }
+    }
+    else if (type == sim_markertype_custom)
+    {
+        if (indices == 0 || indexCount < 3 || vertices == 0 || vertexCount < 3)
+            return;
+        const int vertexCnt = vertexCount / 3; // vertexCount is a float count
+        int triangle;
+        bool hasTriangle = false;
+        for (triangle = 0; triangle + 2 < indexCount; triangle += 3)
+        {
+            if (indices[triangle] >= 0 && indices[triangle] < vertexCnt &&
+                indices[triangle + 1] >= 0 && indices[triangle + 1] < vertexCnt &&
+                indices[triangle + 2] >= 0 && indices[triangle + 2] < vertexCnt)
+            {
+                hasTriangle = true;
+                break;
+            }
+        }
+        if (! hasTriangle)
+            return;
+
+        // Normals are one per vertex; without them POV-Ray's geometric triangle
+        // normals are used instead.
+        const bool smooth = (normals != 0);
+        const int meshIndex = markerMeshIndex++;
+        p = buffer;
+        p += sprintf (p, "#declare markerMesh%d = mesh {\n", meshIndex);
+        scene.write (buffer, p - buffer);
+
+        for (triangle = 0; triangle + 2 < indexCount; triangle += 3)
+        {
+            const int i0 = indices[triangle];
+            const int i1 = indices[triangle + 1];
+            const int i2 = indices[triangle + 2];
+            if (i0 < 0 || i0 >= vertexCnt || i1 < 0 || i1 >= vertexCnt ||
+                i2 < 0 || i2 >= vertexCnt)
+                continue;
+            if (smooth)
+            {
+                scene.write ("smooth_triangle {", 17);
+                scene.write ((const char*) (vertices + 3 * i0), sizeof (float) * 3);
+                scene.write ((const char*) (normals + 3 * i0), sizeof (float) * 3);
+                scene.write ((const char*) (vertices + 3 * i1), sizeof (float) * 3);
+                scene.write ((const char*) (normals + 3 * i1), sizeof (float) * 3);
+                scene.write ((const char*) (vertices + 3 * i2), sizeof (float) * 3);
+                scene.write ((const char*) (normals + 3 * i2), sizeof (float) * 3);
+            }
+            else
+            {
+                scene.write ("triangle {", 10);
+                scene.write ((const char*) (vertices + 3 * i0), sizeof (float) * 3);
+                scene.write ((const char*) (vertices + 3 * i1), sizeof (float) * 3);
+                scene.write ((const char*) (vertices + 3 * i2), sizeof (float) * 3);
+            }
+            scene.write ("}\n", 2);
+        }
+        scene.write ("};\n", 3);
+
+        for (i = 0; i < pointCount; ++i)
+        {
+            C4X4Matrix matrix = markerItemMatrix (frame, pointData + 3 * i,
+                                                  quaternions != 0 ? quaternions + 4 * i : 0,
+                                                  sizes != 0 ? sizes + 3 * i : 0);
+            if (overlay)
+                markerMoveOverlayMatrix (matrix, overlayScale, overlayShift);
+            markerReadColor (colors, i, rgba);
+            p = buffer;
+            p += sprintf (p, "object {markerMesh%d", meshIndex);
+            markerWriteTexture (p, rgba);
+            markerWriteMatrix (p, matrix);
+            p += sprintf (p, " no_shadow");
+            if (! overlay)
+                markerWriteClipping (p);
+            p += sprintf (p, "}\n");
+            scene.write (buffer, p - buffer);
+        }
+    }
+    else
+    {
+        // One-point primitives: unit shape in [-0.5, 0.5], posed by the point,
+        // the per-item quaternion and the per-item size.
+        for (i = 0; i < pointCount; ++i)
+        {
+            C4X4Matrix matrix = markerItemMatrix (frame, pointData + 3 * i,
+                                                  quaternions != 0 ? quaternions + 4 * i : 0,
+                                                  sizes != 0 ? sizes + 3 * i : 0);
+            if (overlay)
+                markerMoveOverlayMatrix (matrix, overlayScale, overlayShift);
+            markerReadColor (colors, i, rgba);
+            if (type == sim_markertype_squares)
+            {
+                markerWriteUnitSquare (rgba, matrix, overlay);
+                continue;
+            }
+            p = buffer;
+            if (type == sim_markertype_spheres)
+                p += sprintf (p, "sphere {<0,0,0>, 0.5");
+            else if (type == sim_markertype_discs)
+                p += sprintf (p, "disc {<0,0,0>, <0,0,1>, 0.5");
+            else if (type == sim_markertype_cubes)
+                p += sprintf (p, "box {<-0.5,-0.5,-0.5>, <0.5,0.5,0.5>");
+            else if (type == sim_markertype_cylinders)
+                p += sprintf (p, "cylinder {<0,0,-0.5>, <0,0,0.5>, 0.5");
+            else
+                continue; // unknown marker type
+            markerWriteTexture (p, rgba);
+            if (type == sim_markertype_discs)
+                p += sprintf (p, " double_illuminate");
+            markerWriteMatrix (p, matrix);
+            p += sprintf (p, " no_shadow");
+            if (! overlay)
+                markerWriteClipping (p);
+            p += sprintf (p, "}\n");
+            scene.write (buffer, p - buffer);
+        }
+    }
+}
 
 SIM_DLLEXPORT int simInit(SSimInit* info)
 {
@@ -152,12 +785,29 @@ SIM_DLLEXPORT void simPovRay(int message,void* data)
         C3Vector& dir = m4.M.axis[2];
         C3Vector  foc = pos + dir;
         C3Vector& sky = m4.M.axis[1];
+
+        // Remember the camera state; overlay markers are moved in front of the
+        // scene, which is clipped at the near plane:
+        cameraIsPerspective = perspectiveOperation;
+        cameraPosition = pos;
+        cameraViewDirection = dir.getNormalized();
+        cameraNearPlane = nearClippingPlane;
+        if (cameraNearPlane <= 0.0f)
+            cameraNearPlane = 0.01f;
+        markerMeshIndex = 0;
+
+        // Not-shaded markers cancel the ambient term by dividing by this value,
+        // so a black scene ambient is raised to a barely visible minimum.
+        int ambientIndex;
+        for (ambientIndex = 0; ambientIndex < 3; ++ambientIndex)
+            markerAmbientLight[ambientIndex] = (amb[ambientIndex] > 0.001f) ? amb[ambientIndex] : 0.001f;
+
         float ratio = (float) resolutionX / (float) resolutionY;
         char* p = paragraph;
 
         p += sprintf (p, "global_settings {ambient_light rgb <%f,%f,%f> "
                          "max_trace_level 15}\nbackground {rgb <%f,%f,%f>}\ncamera {",
-                      amb[0], amb[1], amb[2],
+                      markerAmbientLight[0], markerAmbientLight[1], markerAmbientLight[2],
                       backgroundColor[0], backgroundColor[1], backgroundColor[2]);
 
         // Set camera options according to projection type
@@ -456,6 +1106,11 @@ SIM_DLLEXPORT void simPovRay(int message,void* data)
         scene.write (paragraph, p - paragraph);
 
         mesh_count++;
+    }
+
+    else if (message==sim_message_eventcallback_extrenderer_marker)
+    {
+        writeMarker((void**)data);
     }
 
     else if (message==sim_message_eventcallback_extrenderer_triangles)
