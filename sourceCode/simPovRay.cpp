@@ -604,8 +604,9 @@ static void writeMarker (void** valPtr)
         if (! hasTriangle)
             return;
 
-        // Normals are one per vertex; without them POV-Ray's geometric triangle
-        // normals are used instead.
+        // Normals are three per triangle, in corner (de-indexed) order, i.e.
+        // one normal for indices[triangle + 0..2]; without them POV-Ray's
+        // geometric triangle normals are used instead.
         const bool smooth = (normals != 0);
         const int meshIndex = markerMeshIndex++;
         p = buffer;
@@ -624,11 +625,11 @@ static void writeMarker (void** valPtr)
             {
                 scene.write ("smooth_triangle {", 17);
                 scene.write ((const char*) (vertices + 3 * i0), sizeof (float) * 3);
-                scene.write ((const char*) (normals + 3 * i0), sizeof (float) * 3);
+                scene.write ((const char*) (normals + 3 * triangle), sizeof (float) * 3);
                 scene.write ((const char*) (vertices + 3 * i1), sizeof (float) * 3);
-                scene.write ((const char*) (normals + 3 * i1), sizeof (float) * 3);
+                scene.write ((const char*) (normals + 3 * (triangle + 1)), sizeof (float) * 3);
                 scene.write ((const char*) (vertices + 3 * i2), sizeof (float) * 3);
-                scene.write ((const char*) (normals + 3 * i2), sizeof (float) * 3);
+                scene.write ((const char*) (normals + 3 * (triangle + 2)), sizeof (float) * 3);
             }
             else
             {
