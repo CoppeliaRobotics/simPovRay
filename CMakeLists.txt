@@ -14,7 +14,7 @@ if(NOT COPPELIASIM_INCLUDE_DIR)
     endif()
 endif()
 list(APPEND CMAKE_MODULE_PATH ${COPPELIASIM_INCLUDE_DIR}/cmake)
-find_package(CoppeliaSim 4.5.1.7 REQUIRED COMPONENTS simLib-1 simMath-1)
+find_package(CoppeliaSim 4.5.1.7 REQUIRED COMPONENTS simLib-2 simMath-1)
 
 set(Qt Qt5 CACHE STRING "Qt version to use (e.g. Qt5)")
 set_property(CACHE Qt PROPERTY STRINGS Qt5 Qt6)

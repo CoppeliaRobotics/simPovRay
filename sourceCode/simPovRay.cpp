@@ -1,5 +1,5 @@
 #include <simPovRay.h>
-#include <simLib/simLib.h>
+#include <simLib-2/simLib.h>
 #include <simMath/4X4Matrix.h>
 #include <iostream>
 #include <vector>
@@ -12,6 +12,7 @@ LIBRARY simLib;
 
 int resolutionX, resolutionY;
 bool perspectiveOperation;
+float renderViewAngle, renderOrthoSize;
 int light_count, mesh_count;
 QString file_name (QDir::tempPath() + "/scene.pov");
 QFile scene (file_name);
@@ -702,6 +703,261 @@ static void writeMarker (void** valPtr)
     }
 }
 
+// ---------------------------------------------------------------------------
+// Point clouds and octrees
+//
+// These objects are not part of the ext-renderer callback stream: they are
+// fetched through the simLib-2 property API while the frame's scene file is
+// still open, i.e. right after all shapes have been written.  Their points
+// (voxels) are expressed in the object's reference frame, obtained with
+// simGetObjectPose().
+// ---------------------------------------------------------------------------
+
+static float sceneRandomFloat (unsigned int& state)
+{
+    state = state * 1664525u + 1013904223u;
+    return float ((state >> 8) & 0xFFFFFFu) / 16777216.0f;
+}
+
+static void sceneRandomColor (int index, float rgba[4])
+{
+    unsigned int state = (unsigned int) index * 747796405u + 2891336453u;
+    rgba[0] = 0.2f + 0.8f * sceneRandomFloat (state);
+    rgba[1] = 0.2f + 0.8f * sceneRandomFloat (state);
+    rgba[2] = 0.2f + 0.8f * sceneRandomFloat (state);
+    rgba[3] = 1.0f;
+}
+
+static void sceneReadItemColor (const unsigned char* colors, int colorCount,
+                                bool randomColors, int index, float rgba[4])
+{
+    if (randomColors)
+    {
+        sceneRandomColor (index, rgba);
+    }
+    else if (colors != 0 && index < colorCount)
+    {
+        const unsigned char* c = colors + 4 * index;
+        rgba[0] = c[0] / 255.0f;
+        rgba[1] = c[1] / 255.0f;
+        rgba[2] = c[2] / 255.0f;
+        rgba[3] = c[3] / 255.0f;
+    }
+    else
+    {
+        rgba[0] = rgba[1] = rgba[2] = 0.8f;
+        rgba[3] = 1.0f;
+    }
+}
+
+// World radius of a point that covers pointSize pixels at the given depth.
+static float scenePointRadius (float depth, int pointSize)
+{
+    if (pointSize < 1)
+        pointSize = 1;
+    const int largerResolution = (resolutionX > resolutionY) ? resolutionX : resolutionY;
+    if (largerResolution <= 0)
+        return 0.0f;
+    float worldPerPixel;
+    if (perspectiveOperation)
+    {
+        const float tanHalfAngle = tanf (0.5f * renderViewAngle);
+        worldPerPixel = 2.0f * depth * tanHalfAngle / (float) largerResolution;
+    }
+    else
+    {
+        worldPerPixel = renderOrthoSize / (float) largerResolution;
+    }
+    return 0.5f * (float) pointSize * worldPerPixel;
+}
+
+static bool sceneObjectIsVisible (SIMHANDLE handle)
+{
+    int visible = 1;
+    if (simGetBoolProperty ((long long int) handle, "visible", &visible) == sim_propertyret_ok)
+        return visible != 0;
+    return true;
+}
+
+static bool sceneObjectPose (SIMHANDLE handle, C4X4Matrix& matrix)
+{
+    double pose[7];
+    if (simGetObjectPose (handle, -1, pose) != 1)
+        return false;
+    const CPose objectPose (CQuaternion ((simReal) pose[6], (simReal) pose[3],
+                                         (simReal) pose[4], (simReal) pose[5]),
+                            C3Vector ((simReal) pose[0], (simReal) pose[1],
+                                      (simReal) pose[2]));
+    matrix = objectPose.getMatrix();
+    return true;
+}
+
+static void sceneWritePoint (const C3Vector& position, float radius, const float rgba[4])
+{
+    char buffer[1024];
+    char* p = buffer;
+    p += sprintf (p, "sphere {<%.9g,%.9g,%.9g>, %.9g",
+                  position(0), position(1), position(2), radius);
+    markerWriteTexture (p, rgba);
+    p += sprintf (p, " no_shadow");
+    markerWriteClipping (p);
+    p += sprintf (p, "}\n");
+    scene.write (buffer, p - buffer);
+}
+
+static void sceneWriteVoxel (const C4X4Matrix& matrix, float halfSize, const float rgba[4])
+{
+    char buffer[1024];
+    char* p = buffer;
+    p += sprintf (p, "box {<%.9g,%.9g,%.9g>, <%.9g,%.9g,%.9g>",
+                  -halfSize, -halfSize, -halfSize,
+                  halfSize, halfSize, halfSize);
+    markerWriteTexture (p, rgba);
+    markerWriteMatrix (p, matrix);
+    p += sprintf (p, " no_shadow");
+    markerWriteClipping (p);
+    p += sprintf (p, "}\n");
+    scene.write (buffer, p - buffer);
+}
+
+static void sceneWritePointClouds ()
+{
+    markerNotShaded = false;
+
+    int index = 0;
+    for (;;)
+    {
+        const SIMHANDLE handle = simGetObjects (index++, sim_sceneobject_pointcloud);
+        if (handle < 0)
+            break;
+        if (! sceneObjectIsVisible (handle))
+            continue;
+
+        C4X4Matrix objectMatrix;
+        if (! sceneObjectPose (handle, objectMatrix))
+            continue;
+
+        char* packedPoints = 0;
+        int packedLength = 0;
+        if (simGetBufferProperty ((long long int) handle, "packedPoints", &packedPoints, &packedLength) != sim_propertyret_ok ||
+            packedPoints == 0 || packedLength < int (3 * sizeof (float)))
+        {
+            if (packedPoints != 0)
+                simReleaseBuffer (packedPoints);
+            continue;
+        }
+
+        char* colorBuffer = 0;
+        int colorLength = 0;
+        simGetBufferProperty ((long long int) handle, "colors", &colorBuffer, &colorLength);
+
+        int randomColorsValue = 0;
+        const bool randomColors =
+            (simGetBoolProperty ((long long int) handle, "randomColors", &randomColorsValue) == sim_propertyret_ok) &&
+            (randomColorsValue != 0);
+
+        int pointSize = 1;
+        simGetIntProperty ((long long int) handle, "pointSize", &pointSize);
+
+        const float* points = (const float*) packedPoints;
+        const int pointCount = packedLength / int (3 * sizeof (float));
+        const int colorCount = (colorBuffer != 0) ? colorLength / 4 : 0;
+
+        int i;
+        for (i = 0; i < pointCount; ++i)
+        {
+            const C3Vector position = objectMatrix * C3Vector (points[3 * i],
+                                                               points[3 * i + 1],
+                                                               points[3 * i + 2]);
+            float depth = 1.0f;
+            if (perspectiveOperation)
+            {
+                depth = (position - cameraPosition) * cameraViewDirection;
+                if (depth <= 1e-6f)
+                    continue; // behind the camera
+            }
+            const float radius = scenePointRadius (depth, pointSize);
+            if (radius <= 0.0f)
+                continue;
+
+            float rgba[4];
+            sceneReadItemColor ((const unsigned char*) colorBuffer, colorCount,
+                                randomColors, i, rgba);
+            sceneWritePoint (position, radius, rgba);
+        }
+
+        simReleaseBuffer (packedPoints);
+        if (colorBuffer != 0)
+            simReleaseBuffer (colorBuffer);
+    }
+}
+
+static void sceneWriteOctrees ()
+{
+    markerNotShaded = false;
+
+    int index = 0;
+    for (;;)
+    {
+        const SIMHANDLE handle = simGetObjects (index++, sim_sceneobject_octree);
+        if (handle < 0)
+            break;
+        if (! sceneObjectIsVisible (handle))
+            continue;
+
+        C4X4Matrix objectMatrix;
+        if (! sceneObjectPose (handle, objectMatrix))
+            continue;
+
+        double voxelSize = 0.0;
+        if (simGetFloatProperty ((long long int) handle, "voxelSize", &voxelSize) != sim_propertyret_ok ||
+            voxelSize <= 0.0)
+            continue;
+
+        char* packedPoints = 0;
+        int packedLength = 0;
+        if (simGetBufferProperty ((long long int) handle, "packedPoints", &packedPoints, &packedLength) != sim_propertyret_ok ||
+            packedPoints == 0 || packedLength < int (3 * sizeof (float)))
+        {
+            if (packedPoints != 0)
+                simReleaseBuffer (packedPoints);
+            continue;
+        }
+
+        char* colorBuffer = 0;
+        int colorLength = 0;
+        simGetBufferProperty ((long long int) handle, "colors", &colorBuffer, &colorLength);
+
+        int randomColorsValue = 0;
+        const bool randomColors =
+            (simGetBoolProperty ((long long int) handle, "randomColors", &randomColorsValue) == sim_propertyret_ok) &&
+            (randomColorsValue != 0);
+
+        const float* points = (const float*) packedPoints;
+        const int pointCount = packedLength / int (3 * sizeof (float));
+        const int colorCount = (colorBuffer != 0) ? colorLength / 4 : 0;
+        const float halfSize = 0.5f * (float) voxelSize;
+
+        int i;
+        for (i = 0; i < pointCount; ++i)
+        {
+            C4X4Matrix translation;
+            translation.setIdentity();
+            translation.X = C3Vector (points[3 * i], points[3 * i + 1], points[3 * i + 2]);
+            const C4X4Matrix matrix = objectMatrix * translation;
+
+            float rgba[4];
+            sceneReadItemColor ((const unsigned char*) colorBuffer, colorCount,
+                                randomColors, i, rgba);
+            sceneWriteVoxel (matrix, halfSize, rgba);
+        }
+
+        simReleaseBuffer (packedPoints);
+        if (colorBuffer != 0)
+            simReleaseBuffer (colorBuffer);
+    }
+}
+
 SIM_DLLEXPORT int simInit(SSimInit* info)
 {
      simLib=loadSimLibrary(info->coppeliaSimLibPath);
@@ -804,6 +1060,8 @@ SIM_DLLEXPORT void simPovRay(int message,void* data)
         if (cameraNearPlane <= 0.0f)
             cameraNearPlane = 0.01f;
         markerMeshIndex = 0;
+        renderViewAngle = viewAngle;
+        renderOrthoSize = orthoViewSize;
 
         // Not-shaded markers cancel the ambient term by dividing by this value,
         // so a black scene ambient is raised to a barely visible minimum.
@@ -1185,6 +1443,11 @@ SIM_DLLEXPORT void simPovRay(int message,void* data)
         void** valPtr=(void**)data;
         unsigned char* rgbBuffer=(unsigned char*)valPtr[0];
         //float* depthBuffer=(float*)valPtr[1];
+
+        // Point clouds and octrees are scene objects rather than callback data;
+        // fetch and write them once all shapes have been rendered:
+        sceneWritePointClouds ();
+        sceneWriteOctrees ();
 
         // Close output file
         scene.close();

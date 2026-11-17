@@ -57,7 +57,7 @@ INCLUDEPATH += external/povray/frontend
 
 SOURCES += \
     sourceCode/simPovRay.cpp \
-    ../include/simLib/simLib.cpp \
+    ../include/simLib-2/simLib.cpp \
     ../include/simMath/mathFuncs.cpp \
     ../include/simMath/3Vector.cpp \
     ../include/simMath/4Vector.cpp \
@@ -159,7 +159,7 @@ SOURCES += \
 
 HEADERS +=\
     sourceCode/simPovRay.h \
-    ../include/simLib/simLib.h \
+    ../include/simLib-2/simLib.h \
     ../include/simMath/mathFuncs.h \
     ../include/simMath/mathDefines.h \
     ../include/simMath/3Vector.h \
