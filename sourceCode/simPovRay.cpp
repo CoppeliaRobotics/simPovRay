@@ -65,8 +65,8 @@ static const char* makePatternedTexture(const std::string& povRayPattern);
 // ---------------------------------------------------------------------------
 // Markers
 //
-// CoppeliaSim sends markers as primitive descriptions (points, lines, tubes,
-// triangles, one-point shapes, axes and custom meshes) together with a marker
+// CoppeliaSim sends markers as primitive descriptions (points, lines,
+// triangles, one-point shapes and custom meshes) together with a marker
 // frame.  The engine's arrays are only valid for the duration of the callback,
 // so they are either copied or consumed immediately here.
 //
@@ -79,7 +79,7 @@ static const char* makePatternedTexture(const std::string& povRayPattern);
 // marker frame.
 // ---------------------------------------------------------------------------
 
-// Points, lines and axes carry no size in the callback, so they get a small
+// Points and lines carry no size in the callback, so they get a small
 // world-space thickness instead (matches the screen-space points/lines of the
 // engine's own renderer reasonably well).
 static const float markerPointRadius = 0.00025f;
@@ -519,30 +519,14 @@ static void writeMarker (void** valPtr)
             scene.write (buffer, p - buffer);
         }
     }
-    else if (type == sim_markertype_lines || type == sim_markertype_tubes)
+    else if (type == sim_markertype_lines)
     {
-        float radius = markerLineRadius;
-        if (type == sim_markertype_tubes)
-        { // the engine stores the tube diameter in the first size value
-            radius = (sizes != 0) ? 0.5f * sizes[0] : markerLineRadius;
-            if (radius <= 0.0f)
-                radius = markerLineRadius;
-        }
-        radius *= overlayScale;
+        const float radius = markerLineRadius * overlayScale;
         for (i = 0; i + 1 < pointCount; i += 2)
         {
             float colorA[4], colorB[4];
             markerReadColor (colors, i, colorA);
-            if (type == sim_markertype_tubes)
-            { // the engine draws tubes with the first colour only
-                int k;
-                for (k = 0; k < 4; ++k)
-                    colorB[k] = colorA[k];
-            }
-            else
-            {
-                markerReadColor (colors, i + 1, colorB);
-            }
+            markerReadColor (colors, i + 1, colorB);
             markerWriteSegment (worldPoints[i], worldPoints[i + 1], radius,
                                 colorA, colorB, overlay);
         }
@@ -557,32 +541,6 @@ static void writeMarker (void** valPtr)
             markerReadColor (colors, i + 2, cc);
             markerWriteTriangle (worldPoints[i], worldPoints[i + 1], worldPoints[i + 2],
                                  ca, cb, cc, overlay);
-        }
-    }
-    else if (type == sim_markertype_axes)
-    {
-        for (i = 0; i < pointCount; ++i)
-        {
-            C4X4Matrix matrix = markerItemMatrix (frame, pointData + 3 * i,
-                                                  quaternions != 0 ? quaternions + 4 * i : 0,
-                                                  sizes != 0 ? sizes + 3 * i : 0);
-            if (overlay)
-                markerMoveOverlayMatrix (matrix, overlayScale, overlayShift);
-
-            const C3Vector origin = matrix.X;
-            int axis;
-            for (axis = 0; axis < 3; ++axis)
-            {
-                C3Vector direction (0.0f, 0.0f, 0.0f);
-                direction(axis) = 1.0f;
-                const C3Vector end = matrix * direction;
-                rgba[0] = (axis == 0) ? 1.0f : 0.0f;
-                rgba[1] = (axis == 1) ? 1.0f : 0.0f;
-                rgba[2] = (axis == 2) ? 1.0f : 0.0f;
-                rgba[3] = 1.0f;
-                markerWriteSegment (origin, end, markerLineRadius * overlayScale,
-                                    rgba, rgba, overlay);
-            }
         }
     }
     else if (type == sim_markertype_custom)
